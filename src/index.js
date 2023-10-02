@@ -1,94 +1,58 @@
-import SlimSelect from 'slim-select';
-import 'slim-select/dist/slimselect.css';
-import { fetchBreeds, fetchCatByBreed } from './cat-api.js';
-import { Loading } from 'notiflix/build/notiflix-loading-aio';
-import { Notify } from 'notiflix/build/notiflix-notify-aio';
+import './css/styles.css';
+import debounce from 'lodash.debounce';
+import Notiflix, { Notify } from 'notiflix';
+import { fetchCountries } from './fetchCountries';
 
-const refs = {
-  select: document.querySelector('.breed-select'),
-  loader: document.querySelector('.loader'),
-  err: document.querySelector('.error'),
-  catCard: document.querySelector('.cat-info'),
+const inputEl = document.getElementById('search-box');
+const listEl = document.querySelector('.country-list');
+const info = document.querySelector('.country-info');
+
+const handleSearchCountry = event => {
+  const searchCountry = event.target.value.trim();
+  listEl.innerHTML = '';
+
+  if (searchCountry !== '') {
+    fetchCountries(searchCountry)
+      .then(data => {
+        if (2 <= data.length && data.length <= 10) {
+          const markup = data
+            .map(
+              country =>
+                `<li class= "list-item"><img clas = "flag" src=${country.flags.png} width = 80px>  ${country.name.common} </li>`
+            )
+            .join('');
+
+          listEl.insertAdjacentHTML('beforeend', markup);
+        }
+        if (data.length > 10) {
+          Notiflix.Notify.info(
+            'Too many matches found. Please enter a more specific name.'
+          );
+        }
+        if (data.length === 1) {
+          const countryInfo = data
+            .map(
+              country =>
+                `<h2><img clas = "flag" src=${
+                  country.flags.png
+                } width = 80px>  ${country.name.common} </h2>
+                <p>Capital: ${country.capital}</p>
+                <p>Population: ${country.population}</p>
+                <p>Languages: ${Object.values(country.languages)}</p>`
+            )
+            .join('');
+
+          listEl.insertAdjacentHTML('beforeend', countryInfo);
+        }
+      })
+      .catch(error => {
+        Notiflix.Notify.failure('Oops, there is no country with that name');
+      });
+  }
 };
+const DEBOUNCE_DELAY = 300;
 
-refs.loader.style.display = 'none';
-refs.err.style.display = 'none';
-refs.select.style.display = 'none';
-refs.catCard.style.display = 'none';
-
-Loading.dots({
-  svgColor: '#5897fb',
-  svgSize: '130px',
-  messageFontSize: '30px',
-});
-
-fetchBreeds()
-  .then(data => {
-    refs.select.style.display = 'flex';
-    refs.loader.style.display = 'none';
-
-    createMarkupOptins(data);
-    new SlimSelect({
-      select: refs.select,
-    });
-  })
-  .catch(err => {
-    Notify.failure(refs.err.textContent);
-  })
-  .finally(result => Loading.remove());
-
-function createMarkupOptins(arr) {
-  return arr
-    .map(({ id, name }) => {
-      console.log({ id, name });
-
-      const option = `<option value=${id}>${name}</option>`;
-      refs.select.insertAdjacentHTML('beforeend', option);
-    })
-    .join('');
-}
-
-refs.select.addEventListener('change', e => {
-  const id = e.target.value;
-
-  Loading.dots({
-    svgColor: '#5897fb',
-    svgSize: '130px',
-    messageFontSize: '30px',
-  });
-
-  fetchCatByBreed(id)
-    .then(catInfo => {
-      refs.catCard.style.display = 'flex';
-      createMarkupCards(catInfo);
-    })
-    .catch(err => {
-      Notify.failure(refs.err.textContent);
-    })
-    .finally(result => Loading.remove());
-});
-
-function createMarkupCards(data) {
-  const {
-    breeds: { name, description, temperament },
-    url,
-  } = data;
-
-  const card = ` 
-      <img class="cat-img" src="${url}" alt="${name}"  >
-       <div class="cat-right">
-      <h1 class="name">${name}</h1>
-      <p class="description">${description}</p>
-      <p class="temperament"><span class="temperament-span">Temperament:</span> ${temperament}</p>    
-      </div>`;
-
-  // const card = `
-  //     <img class="cat-img" src="${data.url}" alt="${data.breeds[0].name}"  >
-  //      <div class="cat-right">
-  //     <h1 class="name">${data.breeds[0].name}</h1>
-  //     <p class="description">${data.breeds[0].description}</p>
-  //     <p class="temperament"><span class="temperament-span">Temperament:</span> ${data.breeds[0].temperament}</p>
-  //     </div>`;
-
-  refs.catCard.innerHTML = card;
-}
+inputEl.addEventListener(
+  'input',
+  debounce(handleSearchCountry, DEBOUNCE_DELAY)
+);
