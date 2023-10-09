@@ -12,6 +12,18 @@ body {
   line-height: 1.5;
 }
 
+ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
 #search-box {
   font: inherit;
   padding: 8px;
@@ -19,12 +31,20 @@ body {
   margin-bottom: 16px;
 }
 
-.country-list {
-  font-size: 40px;
-  list-style: none;
-}
-.list-item {
+.country-item {
   display: flex;
-  gap: 10;
-  margin-bottom: 10px;
+  justify-content: start;
+  align-items: center;
+  gap: 20px;
+}
+
+.country__item {
+  font-size: 22px;
+  font-weight: 800;
+  margin-right: 20px;
+}
+
+.country__description {
+  font-size: 20px;
+  font-weight: 500;
 }
